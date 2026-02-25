@@ -5,13 +5,18 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, Zap, ZapOff, Check } from "lucide-react";
 import { compressImageFile } from "@/lib/compress-image";
+import ProcessingScreen from "@/components/ProcessingScreen";
+
+type ScanState =
+  | { phase: "camera" }
+  | { phase: "processing"; promise: Promise<{ companyId: string }> };
 
 export default function CameraScreen() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [objectUrls, setObjectUrls] = useState<string[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const [scanState, setScanState] = useState<ScanState>({ phase: "camera" });
   const [flash, setFlash] = useState(false);
 
   const addFiles = (newFiles: FileList | null) => {
@@ -28,10 +33,9 @@ export default function CameraScreen() {
     setObjectUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleFinish = async () => {
+  const handleFinish = () => {
     if (files.length === 0) return;
-    setUploading(true);
-    try {
+    const promise = (async (): Promise<{ companyId: string }> => {
       const compressed = await Promise.all(files.map(compressImageFile));
       const formData = new FormData();
       compressed.forEach((f) => formData.append("images", f));
@@ -43,14 +47,22 @@ export default function CameraScreen() {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || `Upload failed: ${res.status}`);
       }
-      const data = (await res.json()) as { companyId: string };
-      router.push(`/scan/review?companyId=${data.companyId}`);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Upload failed");
-    } finally {
-      setUploading(false);
-    }
+      return (await res.json()) as { companyId: string };
+    })();
+    setScanState({ phase: "processing", promise });
   };
+
+  if (scanState.phase === "processing") {
+    return (
+      <ProcessingScreen
+        promise={scanState.promise}
+        onSuccess={(companyId) =>
+          router.push(`/scan/review?companyId=${companyId}`)
+        }
+        onRetry={() => setScanState({ phase: "camera" })}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-black text-white min-h-[100dvh]">
@@ -130,10 +142,9 @@ export default function CameraScreen() {
               <button
                 type="button"
                 onClick={handleFinish}
-                disabled={uploading}
-                className="bg-blue-600 text-white px-4 py-2.5 rounded-full font-medium text-sm flex items-center gap-1.5 active:bg-blue-700 transition-colors disabled:opacity-50"
+                className="bg-blue-600 text-white px-4 py-2.5 rounded-full font-medium text-sm flex items-center gap-1.5 active:bg-blue-700 transition-colors"
               >
-                {uploading ? "Uploading…" : "Finish"}
+                Finish
                 <Check size={16} />
               </button>
             )}

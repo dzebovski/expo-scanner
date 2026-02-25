@@ -1,26 +1,70 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Image as ImageIcon, Zap, Check, Loader2 } from "lucide-react";
+import { Image as ImageIcon, Zap, Check, Loader2, AlertCircle } from "lucide-react";
 
-type Props = { onComplete: () => void };
+type Props = {
+  promise: Promise<{ companyId: string }>;
+  onSuccess: (companyId: string) => void;
+  onRetry: () => void;
+};
 
-export default function ProcessingScreen({ onComplete }: Props) {
-  const [state, setState] = useState(1);
+export default function ProcessingScreen({ promise, onSuccess, onRetry }: Props) {
+  const [state, setState] = useState<1 | 2 | 3>(1);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const t1 = setTimeout(() => setState(2), 2000);
-    const t2 = setTimeout(() => setState(3), 4500);
-    const t3 = setTimeout(() => onComplete(), 6000);
-    const interval = setInterval(() => setProgress((p) => Math.min(p + 5, 100)), 100);
+    let mounted = true;
+    const t1 = setTimeout(() => {
+      if (mounted) setState(2);
+    }, 2000);
+    const interval = setInterval(() => {
+      if (mounted) setProgress((p) => Math.min(p + 5, 100));
+    }, 100);
+    let successTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    promise
+      .then((data) => {
+        if (!mounted) return;
+        setState(3);
+        successTimeout = setTimeout(() => {
+          if (mounted) onSuccess(data.companyId);
+        }, 800);
+      })
+      .catch((e) => {
+        if (!mounted) return;
+        setError(e instanceof Error ? e.message : "Щось пішло не так");
+      });
+
     return () => {
+      mounted = false;
       clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
       clearInterval(interval);
+      if (successTimeout) clearTimeout(successTimeout);
     };
-  }, [onComplete]);
+  }, [promise, onSuccess]);
+
+  if (error) {
+    return (
+      <div className="flex flex-col h-full bg-white items-center justify-center p-8 text-center min-h-[100dvh]">
+        <div className="w-full max-w-sm rounded-2xl border border-red-200 bg-red-50 p-6 shadow-sm">
+          <div className="flex justify-center mb-4">
+            <AlertCircle size={48} className="text-red-500" />
+          </div>
+          <h2 className="text-lg font-semibold text-slate-900 mb-2">Помилка</h2>
+          <p className="text-slate-600 mb-6 text-sm">{error}</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-medium text-sm active:bg-blue-700 transition-colors"
+          >
+            Спробувати ще раз
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-white items-center justify-center p-8 text-center min-h-[100dvh]">
