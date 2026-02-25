@@ -1,20 +1,30 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Expo Scanner (PWA)
 
-# Run and deploy your AI Studio app
+Next.js 14 PWA for scanning exhibition booths and extracting company info with AI (Gemini). Data and images are stored in Supabase.
 
-This contains everything you need to run your app locally.
+## Run locally
 
-View your app in AI Studio: https://ai.studio/apps/ed1d830e-2edd-4768-9900-1f292adcf564
+**Prerequisites:** Node.js 18+
 
-## Run Locally
+1. Install dependencies: `npm install`
+2. Copy env: `cp .env.example .env.local`
+3. Set in `.env.local`:
+   - `GEMINI_API_KEY` — Gemini API key (server-only)
+   - `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
+   - `SUPABASE_SERVICE_ROLE_KEY` — Supabase service role key
+4. Run: `npm run dev` → open [http://localhost:3000](http://localhost:3000)
 
-**Prerequisites:**  Node.js
+## PWA
 
+- Installable (manifest + icons). Offline: service worker caches the app shell so the app opens without network.
+- Replace `public/icon-192.png` and `public/icon-512.png` with your own icons if desired (generated from `public/placeholder.svg`).
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Project layout
+
+- **Root** — Next.js App Router app: `app/`, `components/`, `lib/`, `public/`
+- **legacy/** — Original Vite/React prototype (reference only; not run as part of the app)
+- **supabase/** — SQL migration and [setup instructions](supabase/README.md) for tables and Storage bucket
+
+## Implementation plan
+
+See [.cursor/plans/expo_scanner_pwa_implementation_42390188.plan.md](.cursor/plans/expo_scanner_pwa_implementation_42390188.plan.md) for the full PWA implementation plan.
