@@ -1,0 +1,5 @@
+{
+  "name": "Expo Scanner",
+  "description": "Mobile-first PWA interface prototype for scanning exhibition companies.",
+  "requestFramePermissions": ["camera"]
+}
