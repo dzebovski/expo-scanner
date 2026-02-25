@@ -1,8 +1,18 @@
 import sharp from "sharp";
+import convert from "heic-convert";
 import { GoogleGenAI, createPartFromBase64, createPartFromText } from "@google/genai";
 import { getSupabase } from "@/lib/supabase/server";
 import type { CompanyRow } from "@/lib/types";
 import { STORAGE_BUCKET } from "@/lib/types";
+
+function isHeic(file: File): boolean {
+  return (
+    file.type === "image/heic" ||
+    file.type === "image/heif" ||
+    /\.heic$/i.test(file.name) ||
+    /\.heif$/i.test(file.name)
+  );
+}
 
 const MAX_SIDE = 1600;
 const JPEG_QUALITY = 80;
@@ -109,11 +119,29 @@ export async function runScanPipeline(
   const buffers = await Promise.all(
     files.map(async (f) => {
       const ab = await f.arrayBuffer();
-      return processImage(Buffer.from(ab));
+      let buf = Buffer.from(ab);
+      if (isHeic(f)) {
+        const out = await convert({
+          buffer: buf,
+          format: "JPEG",
+          quality: 1,
+        });
+        buf = Buffer.isBuffer(out) ? out : Buffer.from(out as ArrayBuffer);
+      }
+      return processImage(buf);
     })
   );
 
   const extracted = await extractCompanyFromImages(buffers);
+
+  const notesParts: string[] = [];
+  const shortDesc = extracted.short_description?.trim();
+  if (shortDesc) notesParts.push(shortDesc);
+  const confidence = extracted.confidence;
+  if (typeof confidence === "number" && confidence < 0.6) {
+    notesParts.push(`Low confidence extraction (${confidence.toFixed(2)}).`);
+  }
+  const notes = notesParts.length > 0 ? notesParts.join("\n\n") : null;
 
   const { data: companyRow, error: insertError } = await supabase
     .from("companies")
@@ -128,7 +156,7 @@ export async function runScanPipeline(
       phones: extracted.phones ?? [],
       product_categories: extracted.product_categories ?? [],
       confidence: extracted.confidence ?? null,
-      notes: null,
+      notes,
     })
     .select("id")
     .single();

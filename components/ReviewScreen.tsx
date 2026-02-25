@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Building2,
   Globe,
@@ -11,15 +11,42 @@ import {
   MapPin,
   Tag,
   FileText,
+  ChevronLeft,
+  Trash2,
 } from "lucide-react";
 import FormField from "./FormField";
 import type { Company } from "@/lib/types";
+
+type CompanyAsset = { id: string; public_url: string };
 
 type Props = { company: Company };
 
 export default function ReviewScreen({ company }: Props) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [assets, setAssets] = useState<CompanyAsset[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/companies/${company.id}/assets`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setAssets)
+      .catch(() => setAssets([]));
+  }, [company.id]);
+
+  const thumbnailUrl = assets[0]?.public_url ?? company.thumbnail;
+  const handleDeletePhoto = async (assetId: string) => {
+    setDeletingId(assetId);
+    try {
+      const res = await fetch(`/api/companies/${company.id}/assets/${assetId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete");
+      setAssets((prev) => prev.filter((a) => a.id !== assetId));
+    } catch {
+      alert("Failed to delete photo");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -67,13 +94,20 @@ export default function ReviewScreen({ company }: Props) {
   return (
     <div className="flex flex-col h-full bg-slate-50 relative min-h-[100dvh]">
       <header className="px-4 py-4 bg-white text-slate-900 flex items-center justify-between sticky top-0 z-10 border-b border-slate-100 shadow-sm">
+        <Link
+          href={`/company/${company.id}`}
+          className="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+        >
+          <ChevronLeft size={24} />
+        </Link>
         <h1 className="text-lg font-semibold">Review Details</h1>
+        <div className="w-10" />
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 space-y-6 pb-32">
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex items-center gap-4">
           <img
-            src={company.thumbnail || "/placeholder.svg"}
+            src={thumbnailUrl || "/placeholder.svg"}
             alt=""
             className="w-16 h-16 rounded-xl object-cover bg-slate-100"
           />
@@ -113,6 +147,34 @@ export default function ReviewScreen({ company }: Props) {
             <FormField name="notes" label="" defaultValue={company.notes} multiline className="mt-1" />
           </div>
         </form>
+
+        {assets.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
+              Processed pictures
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {assets.map((asset) => (
+                <div key={asset.id} className="relative group rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 aspect-square">
+                  <img
+                    src={asset.public_url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleDeletePhoto(asset.id)}
+                    disabled={deletingId === asset.id}
+                    className="absolute top-2 right-2 p-2 rounded-full bg-red-500/90 text-white hover:bg-red-600 disabled:opacity-50 transition-colors shadow-md"
+                    aria-label="Delete photo"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
 
       <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-4 pb-8 sm:pb-4 flex gap-3 z-20">

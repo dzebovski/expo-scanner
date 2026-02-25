@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, Zap, ZapOff, Check } from "lucide-react";
+import { compressImageFile } from "@/lib/compress-image";
 
 export default function CameraScreen() {
   const router = useRouter();
@@ -31,8 +32,9 @@ export default function CameraScreen() {
     if (files.length === 0) return;
     setUploading(true);
     try {
+      const compressed = await Promise.all(files.map(compressImageFile));
       const formData = new FormData();
-      files.forEach((f) => formData.append("images", f));
+      compressed.forEach((f) => formData.append("images", f));
       const res = await fetch("/api/scan", {
         method: "POST",
         body: formData,

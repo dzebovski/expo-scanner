@@ -1,13 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, Edit2, Globe, Mail, Phone, MapPin } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, Edit2, Globe, Mail, Phone, MapPin, Trash2 } from "lucide-react";
 import type { Company } from "@/lib/types";
 
 type Props = { company: Company };
 
 export default function DetailScreen({ company }: Props) {
+  const router = useRouter();
   const websiteHref = company.website?.match(/^https?:\/\//) ? company.website : `https://${company.website}`;
+
+  const handleDelete = async () => {
+    if (!confirm("Delete this company?")) return;
+    const res = await fetch(`/api/companies/${company.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      alert("Failed to delete company");
+      return;
+    }
+    router.push("/");
+    router.refresh();
+  };
 
   return (
     <div className="flex flex-col h-full bg-slate-50 min-h-[100dvh]">
@@ -124,6 +137,17 @@ export default function DetailScreen({ company }: Props) {
             </div>
           </div>
         )}
+
+        <div className="pt-4">
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl border border-red-200 bg-red-50 text-red-700 font-medium hover:bg-red-100 transition-colors"
+          >
+            <Trash2 size={20} />
+            Delete company
+          </button>
+        </div>
       </main>
     </div>
   );

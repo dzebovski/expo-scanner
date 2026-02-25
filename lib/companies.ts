@@ -1,5 +1,6 @@
 import { getSupabase } from "@/lib/supabase/server";
 import type { Company, CompanyRow } from "@/lib/types";
+import { STORAGE_BUCKET } from "@/lib/types";
 
 function formatTimestamp(createdAt: string): string {
   const d = new Date(createdAt);
@@ -132,4 +133,41 @@ export async function updateCompany(
 
   if (error) throw new Error(error.message);
   return getCompanyById(id);
+}
+
+export async function deleteCompany(id: string): Promise<boolean> {
+  const supabase = getSupabase();
+  const { error } = await supabase.from("companies").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  return true;
+}
+
+export type CompanyAsset = { id: string; public_url: string };
+
+export async function getCompanyAssets(companyId: string): Promise<CompanyAsset[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("image_assets")
+    .select("id, public_url")
+    .eq("company_id", companyId)
+    .order("sort_order");
+  if (error) throw new Error(error.message);
+  return (data ?? []) as CompanyAsset[];
+}
+
+export async function deleteCompanyAsset(companyId: string, assetId: string): Promise<void> {
+  const supabase = getSupabase();
+  const { data: row, error: fetchError } = await supabase
+    .from("image_assets")
+    .select("id, company_id, storage_path")
+    .eq("id", assetId)
+    .eq("company_id", companyId)
+    .single();
+  if (fetchError || !row) throw new Error("Asset not found");
+  const { error: storageError } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .remove([(row as { storage_path: string }).storage_path]);
+  if (storageError) console.error("Storage delete error:", storageError);
+  const { error: deleteError } = await supabase.from("image_assets").delete().eq("id", assetId);
+  if (deleteError) throw new Error(deleteError.message);
 }
