@@ -5,6 +5,19 @@ import type { Session } from "@supabase/supabase-js";
 export type SupabaseWithSession = { supabase: SupabaseClient; session: Session };
 
 /**
+ * Server-side Supabase client with service_role key (bypasses RLS).
+ * Use in API routes and server components when auth is disabled (e.g. for testing).
+ */
+export function getSupabaseServer(): SupabaseClient {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceRoleKey) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+  }
+  return createSupabaseClient(url, serviceRoleKey, { auth: { persistSession: false } });
+}
+
+/**
  * Returns a Supabase client and session for the current request.
  * Tries cookie-based session first (Next.js web), then Authorization: Bearer (Expo/mobile).
  * Use in API routes and pass the client to lib/companies and lib/scan.

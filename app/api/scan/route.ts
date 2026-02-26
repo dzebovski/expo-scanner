@@ -1,19 +1,13 @@
 import { NextResponse } from "next/server";
-import { getSupabaseAndSession } from "@/lib/supabase/server";
+import { getSupabaseServer } from "@/lib/supabase/server";
 import { runScanPipeline } from "@/lib/scan";
 
 /**
  * POST /api/scan
  * Accepts multipart/form-data: images (files), optional hint_text.
  * Pipeline: sharp (resize, strip EXIF, JPEG 80) → Supabase Storage → Gemini → companies + image_assets.
- * Requires auth (cookie or Authorization: Bearer).
  */
 export async function POST(request: Request) {
-  const auth = await getSupabaseAndSession(request);
-  if (!auth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.includes("multipart/form-data")) {
     return NextResponse.json(
@@ -45,11 +39,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { companyId } = await runScanPipeline(
-      auth.supabase,
-      auth.session.user.id,
-      files
-    );
+    const supabase = getSupabaseServer();
+    const { companyId } = await runScanPipeline(supabase, null, files);
     return NextResponse.json({ companyId });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Scan failed";

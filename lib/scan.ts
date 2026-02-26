@@ -112,7 +112,7 @@ export async function extractCompanyFromImages(
 
 export async function runScanPipeline(
   supabase: SupabaseClient,
-  userId: string,
+  userId: string | null,
   files: File[]
 ): Promise<{ companyId: string }> {
 
@@ -146,7 +146,7 @@ export async function runScanPipeline(
   const { data: companyRow, error: insertError } = await supabase
     .from("companies")
     .insert({
-      user_id: userId,
+      user_id: userId ?? null,
       name: extracted.name ?? "New company",
       website: extracted.website ?? null,
       short_description: extracted.short_description ?? null,
