@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { listCompanies } from "@/lib/companies";
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     const supabase = getSupabaseServer();
     const companies = await listCompanies(supabase);
