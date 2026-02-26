@@ -62,18 +62,18 @@ function LoginForm() {
       <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-lg">
         <h1 className="text-xl font-semibold text-slate-900 mb-1">Expo Scanner</h1>
         <p className="text-sm text-slate-500 mb-6">Sign in to scan and manage companies</p>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
               Email
             </label>
             <input
               id="email"
-              type="email"
+              type="text"
+              inputMode="email"
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               placeholder="you@example.com"
             />
@@ -88,7 +88,6 @@ function LoginForm() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>

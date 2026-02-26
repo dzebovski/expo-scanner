@@ -45,12 +45,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const hintText = formData.get("hint_text");
     const { companyId } = await runScanPipeline(
       auth.supabase,
       auth.session.user.id,
-      files,
-      typeof hintText === "string" ? hintText : undefined
+      files
     );
     return NextResponse.json({ companyId });
   } catch (e) {

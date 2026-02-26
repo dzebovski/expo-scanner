@@ -113,8 +113,7 @@ export async function extractCompanyFromImages(
 export async function runScanPipeline(
   supabase: SupabaseClient,
   userId: string,
-  files: File[],
-  _hintText?: string
+  files: File[]
 ): Promise<{ companyId: string }> {
 
   const buffers = await Promise.all(

@@ -1,8 +1,7 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import ReviewScreen from "@/components/ReviewScreen";
 import type { Company } from "@/lib/types";

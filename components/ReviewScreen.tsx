@@ -34,7 +34,7 @@ export default function ReviewScreen({ company }: Props) {
 
   useEffect(() => {
     setCategories(company.categories ?? []);
-  }, [company.id]);
+  }, [company.id, company.categories]);
 
   useEffect(() => {
     fetch(`/api/companies/${company.id}/assets`)
