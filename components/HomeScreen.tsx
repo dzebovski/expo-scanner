@@ -1,23 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Camera, Plus } from "lucide-react";
 import type { Company } from "@/lib/types";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const pathname = usePathname();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (pathname !== "/") return;
+    setLoading(true);
     fetch("/api/companies", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : []))
       .then(setCompanies)
       .catch(() => setCompanies([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [pathname]);
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
