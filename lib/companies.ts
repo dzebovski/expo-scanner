@@ -1,4 +1,4 @@
-import { getSupabase } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Company, CompanyRow } from "@/lib/types";
 import { STORAGE_BUCKET } from "@/lib/types";
 
@@ -37,8 +37,7 @@ function rowToCompany(row: CompanyRow, photoUrls: string[]): Company {
   };
 }
 
-export async function listCompanies(): Promise<Company[]> {
-  const supabase = getSupabase();
+export async function listCompanies(supabase: SupabaseClient): Promise<Company[]> {
   const { data: rows, error } = await supabase
     .from("companies")
     .select("*")
@@ -66,8 +65,7 @@ export async function listCompanies(): Promise<Company[]> {
   );
 }
 
-export async function getCompanyById(id: string): Promise<Company | null> {
-  const supabase = getSupabase();
+export async function getCompanyById(supabase: SupabaseClient, id: string): Promise<Company | null> {
   const { data: row, error } = await supabase
     .from("companies")
     .select("*")
@@ -76,7 +74,7 @@ export async function getCompanyById(id: string): Promise<Company | null> {
 
   if (error || !row) return null;
 
-  const { data: assets } = await getSupabase()
+  const { data: assets } = await supabase
     .from("image_assets")
     .select("public_url, sort_order")
     .eq("company_id", id)
@@ -112,10 +110,10 @@ function toPhones(v: string | string[] | undefined): string[] | null {
 }
 
 export async function updateCompany(
+  supabase: SupabaseClient,
   id: string,
   patch: CompanyUpdate
 ): Promise<Company | null> {
-  const supabase = getSupabase();
   const row: Record<string, unknown> = {
     updated_at: new Date().toISOString(),
   };
@@ -132,11 +130,10 @@ export async function updateCompany(
   const { error } = await supabase.from("companies").update(row).eq("id", id);
 
   if (error) throw new Error(error.message);
-  return getCompanyById(id);
+  return getCompanyById(supabase, id);
 }
 
-export async function deleteCompany(id: string): Promise<boolean> {
-  const supabase = getSupabase();
+export async function deleteCompany(supabase: SupabaseClient, id: string): Promise<boolean> {
   const { error } = await supabase.from("companies").delete().eq("id", id);
   if (error) throw new Error(error.message);
   return true;
@@ -144,8 +141,7 @@ export async function deleteCompany(id: string): Promise<boolean> {
 
 export type CompanyAsset = { id: string; public_url: string };
 
-export async function getCompanyAssets(companyId: string): Promise<CompanyAsset[]> {
-  const supabase = getSupabase();
+export async function getCompanyAssets(supabase: SupabaseClient, companyId: string): Promise<CompanyAsset[]> {
   const { data, error } = await supabase
     .from("image_assets")
     .select("id, public_url")
@@ -155,8 +151,7 @@ export async function getCompanyAssets(companyId: string): Promise<CompanyAsset[
   return (data ?? []) as CompanyAsset[];
 }
 
-export async function deleteCompanyAsset(companyId: string, assetId: string): Promise<void> {
-  const supabase = getSupabase();
+export async function deleteCompanyAsset(supabase: SupabaseClient, companyId: string, assetId: string): Promise<void> {
   const { data: row, error: fetchError } = await supabase
     .from("image_assets")
     .select("id, company_id, storage_path")

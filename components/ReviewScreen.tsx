@@ -13,6 +13,8 @@ import {
   FileText,
   ChevronLeft,
   Trash2,
+  Plus,
+  X,
 } from "lucide-react";
 import FormField from "./FormField";
 import type { Company } from "@/lib/types";
@@ -26,6 +28,13 @@ export default function ReviewScreen({ company }: Props) {
   const [saving, setSaving] = useState(false);
   const [assets, setAssets] = useState<CompanyAsset[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>(company.categories ?? []);
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [newCategoryValue, setNewCategoryValue] = useState("");
+
+  useEffect(() => {
+    setCategories(company.categories ?? []);
+  }, [company.id]);
 
   useEffect(() => {
     fetch(`/api/companies/${company.id}/assets`)
@@ -48,6 +57,19 @@ export default function ReviewScreen({ company }: Props) {
     }
   };
 
+  const addCategory = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    if (categories.includes(trimmed)) return;
+    setCategories((prev) => [...prev, trimmed]);
+    setNewCategoryValue("");
+    setAddingCategory(false);
+  };
+
+  const removeCategory = (index: number) => {
+    setCategories((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
@@ -60,10 +82,6 @@ export default function ReviewScreen({ company }: Props) {
     const city = (formData.get("city") as string)?.trim() ?? company.city;
     const booth = (formData.get("booth") as string)?.trim() ?? company.booth;
     const notes = (formData.get("notes") as string)?.trim() ?? company.notes;
-    const categoriesStr = (formData.get("categories") as string)?.trim();
-    const categories = categoriesStr
-      ? categoriesStr.split(/[,;]/).map((s) => s.trim()).filter(Boolean)
-      : company.categories;
 
     setSaving(true);
     try {
@@ -131,14 +149,65 @@ export default function ReviewScreen({ company }: Props) {
           <FormField label="Booth" name="booth" defaultValue={company.booth} />
           <div>
             <label className="text-xs font-medium text-slate-500 mb-2 flex items-center gap-1.5">
-              <Tag size={16} /> Product Categories (comma-separated)
+              <Tag size={16} /> Product Categories
             </label>
-            <input
-              type="text"
-              name="categories"
-              defaultValue={company.categories.join(", ")}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-            />
+            <div className="flex flex-wrap gap-2 mt-1">
+              {categories.map((cat, i) => (
+                <span
+                  key={`${cat}-${i}`}
+                  className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium border border-blue-100 inline-flex items-center gap-1.5"
+                >
+                  {cat}
+                  <button
+                    type="button"
+                    onClick={() => removeCategory(i)}
+                    className="p-0.5 rounded-full hover:bg-blue-200/80 transition-colors"
+                    aria-label={`Remove ${cat}`}
+                  >
+                    <X size={14} />
+                  </button>
+                </span>
+              ))}
+              {addingCategory ? (
+                <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-full pl-3 pr-1 py-1">
+                  <input
+                    type="text"
+                    value={newCategoryValue}
+                    onChange={(e) => setNewCategoryValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addCategory(newCategoryValue);
+                      }
+                      if (e.key === "Escape") {
+                        setAddingCategory(false);
+                        setNewCategoryValue("");
+                      }
+                    }}
+                    placeholder="New category"
+                    className="w-28 bg-transparent text-sm text-slate-900 focus:outline-none py-1"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => addCategory(newCategoryValue)}
+                    disabled={!newCategoryValue.trim()}
+                    className="p-1.5 rounded-full bg-blue-600 text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label="Add category"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAddingCategory(true)}
+                  className="bg-slate-50 text-slate-500 px-3 py-1.5 rounded-full text-sm font-medium border border-slate-200 border-dashed flex items-center gap-1 active:bg-slate-100 transition-colors"
+                >
+                  <Plus size={14} /> Add
+                </button>
+              )}
+            </div>
           </div>
           <div className="pt-2">
             <label className="text-xs font-medium text-slate-500 mb-1.5 flex items-center gap-1.5">

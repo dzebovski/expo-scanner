@@ -1,14 +1,17 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import DetailScreen from "@/components/DetailScreen";
 import { getCompanyById } from "@/lib/companies";
+import { getSupabaseAndSession } from "@/lib/supabase/server";
 
 type Props = { params: Promise<{ id: string }> };
 
 export default async function CompanyDetailPage({ params }: Props) {
+  const auth = await getSupabaseAndSession();
+  if (!auth) redirect("/login");
   const { id } = await params;
   let company;
   try {
-    company = await getCompanyById(id);
+    company = await getCompanyById(auth.supabase, id);
   } catch {
     company = null;
   }

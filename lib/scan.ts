@@ -1,7 +1,7 @@
 import sharp from "sharp";
 import convert from "heic-convert";
 import { GoogleGenAI, createPartFromBase64, createPartFromText } from "@google/genai";
-import { getSupabase } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CompanyRow } from "@/lib/types";
 import { STORAGE_BUCKET } from "@/lib/types";
 
@@ -111,15 +111,16 @@ export async function extractCompanyFromImages(
 }
 
 export async function runScanPipeline(
+  supabase: SupabaseClient,
+  userId: string,
   files: File[],
   _hintText?: string
 ): Promise<{ companyId: string }> {
-  const supabase = getSupabase();
 
   const buffers = await Promise.all(
     files.map(async (f) => {
       const ab = await f.arrayBuffer();
-      let buf = Buffer.from(ab);
+      let buf: Buffer = Buffer.from(ab);
       if (isHeic(f)) {
         const out = await convert({
           buffer: buf,
@@ -146,6 +147,7 @@ export async function runScanPipeline(
   const { data: companyRow, error: insertError } = await supabase
     .from("companies")
     .insert({
+      user_id: userId,
       name: extracted.name ?? "New company",
       website: extracted.website ?? null,
       short_description: extracted.short_description ?? null,
