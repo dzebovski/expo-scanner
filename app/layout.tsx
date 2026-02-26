@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import RegisterSW from "@/components/RegisterSW";
+import pkg from "../package.json";
 
 export const metadata: Metadata = {
   title: "Expo Scanner",
@@ -44,6 +45,9 @@ export default function RootLayout({
       <body className="min-h-[100dvh]" suppressHydrationWarning>
         <RegisterSW />
         {children}
+        <footer className="fixed bottom-0 left-0 right-0 py-2 text-center text-xs text-slate-400">
+          v{pkg.version}
+        </footer>
       </body>
     </html>
   );
