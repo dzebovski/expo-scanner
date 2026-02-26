@@ -15,7 +15,7 @@ export default function HomeScreen() {
   useEffect(() => {
     if (pathname !== "/") return;
     setLoading(true);
-    fetch("/api/companies", { credentials: "include" })
+    fetch(`/api/companies?t=${Date.now()}`, { credentials: "include", cache: "no-store" })
       .then((r) => (r.ok ? r.json() : []))
       .then(setCompanies)
       .catch(() => setCompanies([]))
