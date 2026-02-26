@@ -13,7 +13,7 @@ export default function DetailScreen({ company }: Props) {
 
   const handleDelete = async () => {
     if (!confirm("Delete this company?")) return;
-    const res = await fetch(`/api/companies/${company.id}`, { method: "DELETE" });
+    const res = await fetch(`/api/companies/${company.id}`, { method: "DELETE", credentials: "include" });
     if (!res.ok) {
       alert("Failed to delete company");
       return;

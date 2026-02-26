@@ -19,7 +19,7 @@ function ReviewContent() {
       setLoading(false);
       return;
     }
-    fetch(`/api/companies/${companyId}`)
+    fetch(`/api/companies/${companyId}`, { credentials: "include" })
       .then((r) => {
         if (!r.ok) throw new Error("Not found");
         return r.json();

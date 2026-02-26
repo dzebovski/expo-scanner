@@ -42,6 +42,7 @@ export default function CameraScreen() {
       const res = await fetch("/api/scan", {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));

@@ -37,7 +37,7 @@ export default function ReviewScreen({ company }: Props) {
   }, [company.id, company.categories]);
 
   useEffect(() => {
-    fetch(`/api/companies/${company.id}/assets`)
+    fetch(`/api/companies/${company.id}/assets`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : []))
       .then(setAssets)
       .catch(() => setAssets([]));
@@ -47,7 +47,7 @@ export default function ReviewScreen({ company }: Props) {
   const handleDeletePhoto = async (assetId: string) => {
     setDeletingId(assetId);
     try {
-      const res = await fetch(`/api/companies/${company.id}/assets/${assetId}`, { method: "DELETE" });
+      const res = await fetch(`/api/companies/${company.id}/assets/${assetId}`, { method: "DELETE", credentials: "include" });
       if (!res.ok) throw new Error("Failed to delete");
       setAssets((prev) => prev.filter((a) => a.id !== assetId));
     } catch {
@@ -87,6 +87,7 @@ export default function ReviewScreen({ company }: Props) {
     try {
       const res = await fetch(`/api/companies/${company.id}`, {
         method: "PATCH",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,

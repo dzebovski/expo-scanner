@@ -12,7 +12,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/companies")
+    fetch("/api/companies", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : []))
       .then(setCompanies)
       .catch(() => setCompanies([]))
